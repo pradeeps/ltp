@@ -205,12 +205,12 @@ static struct tst_test test = {
 		NULL
 	},
 	.save_restore = (const struct tst_path_val[]) {
-		{"/proc/sys/user/max_user_namespaces", "1024", TST_SR_SKIP},
+		{PATH_USER_MAX_USER_NAMESPACES, "1024", TST_SR_SKIP},
 		{}
 	},
 	.tags = (const struct tst_tag[]) {
-		{"linux-git", "bcc5364bdcfe"},
-		{"linux-git", "acf69c946233"},
+		{"linux-git", "bcc5364bdcfe131e6379363f089e7b4108d35b70"},
+		{"linux-git", "acf69c946233259ab4d64f8869d4037a198c7f06"},
 		{"CVE", "2020-14386"},
 		{}
 	}

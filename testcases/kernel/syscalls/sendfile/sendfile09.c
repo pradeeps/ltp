@@ -92,9 +92,9 @@ static struct tst_test test = {
 	.test = run,
 	.tcnt = ARRAY_SIZE(tc),
 	.timeout = 120,
-	.skip_in_compat = 1,
+	.needs_abi_bits = 64,
 	.tags = (const struct tst_tag[]) {
-		{"linux-git", "5d73320a96fcc"},
+		{"linux-git", "5d73320a96fcce80286f1447864c481b5f0b96fa"},
 		{}
 	}
 };

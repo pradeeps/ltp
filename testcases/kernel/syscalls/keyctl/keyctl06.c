@@ -21,10 +21,8 @@
 
 static void add_test_key(const char *description)
 {
-	TEST(add_key("user", description, "payload", 7,
-		     KEY_SPEC_PROCESS_KEYRING));
-	if (TST_RET < 0)
-		tst_brk(TBROK | TTERRNO, "Failed to add test key");
+	SAFE_ADD_KEY("user", description, "payload", 7,
+		     KEY_SPEC_PROCESS_KEYRING);
 }
 
 static void do_test(void)
@@ -61,8 +59,8 @@ static void do_test(void)
 static struct tst_test test = {
 	.test_all = do_test,
 	.tags = (const struct tst_tag[]) {
-		{"linux-git", "e645016abc80"},
-		{"linux-git", "3239b6f29bdf"},
+		{"linux-git", "e645016abc803dafc75e4b8f6e4118f088900ffb"},
+		{"linux-git", "3239b6f29bdfb4b0a2ba59df995fc9e6f4df7f1f"},
 		{}
 	}
 };

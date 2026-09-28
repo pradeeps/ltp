@@ -111,11 +111,11 @@ static struct tst_test test = {
 	.runtime = 600,
 	.test_all = check,
 	.save_restore = (const struct tst_path_val[]) {
-		{"/proc/sys/kernel/pid_max", PID_MAX_STR, TST_SR_TBROK},
+		{PATH_KERN_PID_MAX, PID_MAX_STR, TST_SR_TBROK},
 		{}
 	},
 	.tags = (const struct tst_tag[]) {
-		{"linux-git", "5fdee8c4a5e1"},
+		{"linux-git", "5fdee8c4a5e1800489ce61963208f8cc55e42ea1"},
 		{}
 	}
 };

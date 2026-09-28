@@ -68,10 +68,7 @@ static void setup(void)
 	verify_landlock_is_enabled();
 
 	ruleset_attr->handled_access_fs = LANDLOCK_ACCESS_FS_WRITE_FILE;
-	ruleset_fd = SAFE_LANDLOCK_CREATE_RULESET(
-		ruleset_attr,
-		sizeof(struct tst_landlock_ruleset_attr_abi1),
-		0);
+	ruleset_fd = SAFE_LANDLOCK_CREATE_RULESET(ruleset_attr, sizeof(struct tst_landlock_ruleset_attr_abi1), 0);
 }
 
 static void cleanup(void)
@@ -94,7 +91,7 @@ static struct tst_test test = {
 		{}
 	},
 	.tags = (const struct tst_tag[]) {
-		{"linux-git", "39705a6c29f8"},
+		{"linux-git", "39705a6c29f8a2b93cf5b99528a55366c50014d1"},
 		{"CVE", "2024-42318"},
 		{}
 	}

@@ -9,6 +9,7 @@
 #ifndef TST_COMMON_H__
 #define TST_COMMON_H__
 
+#define LTP_ATTRIBUTE_NOINLINE		__attribute__((noinline))
 #define LTP_ATTRIBUTE_NORETURN		__attribute__((noreturn))
 #define LTP_ATTRIBUTE_UNUSED		__attribute__((unused))
 #define LTP_ATTRIBUTE_UNUSED_RESULT	__attribute__((warn_unused_result))
@@ -25,17 +26,21 @@
 #define LTP_ALIGN(x, a)    __LTP_ALIGN_MASK(x, (typeof(x))(a) - 1)
 #define __LTP_ALIGN_MASK(x, mask)  (((x) + (mask)) & ~(mask))
 
+unsigned int tst_multiply_timeout(unsigned int timeout);
+
 /**
  * TST_RETRY_FUNC() - Repeatedly retry a function with an increasing delay.
- * @FUNC - The function which will be retried
- * @ECHCK - Function/macro for validating @FUNC return value
  *
- * This macro will call @FUNC in a loop with a delay between retries.
- * If ECHCK(ret) evaluates to non-zero, the loop ends. The delay between
- * retries starts at one microsecond and is then doubled each iteration until
- * it exceeds one second (the total time sleeping will be approximately one
- * second as well). When the delay exceeds one second, the loop will end.
- * The TST_RETRY_FUNC() macro returns the last value returned by @FUNC.
+ * @FUNC: The function which will be retried.
+ * @ECHCK: Function or macro for validating @FUNC return value.
+ *
+ * This macro will call @FUNC in a loop with an exponential delay between
+ * retries. If ``ECHCK(ret)`` evaluates to non-zero, the loop ends. The delay
+ * starts at one microsecond and doubles each iteration until it exceeds
+ * one second (scaled by tst_multiply_timeout()). When the maximum delay
+ * is exceeded, the loop ends.
+ *
+ * Return: The last value returned by @FUNC.
  */
 #define TST_RETRY_FUNC(FUNC, ECHCK) \
 	TST_RETRY_FN_EXP_BACKOFF(FUNC, ECHCK, 1)

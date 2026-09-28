@@ -142,6 +142,7 @@ confstr01 confstr01
 
 connect01 connect01
 connect02 connect02
+connect03 connect03
 
 creat01 creat01
 creat03 creat03
@@ -177,14 +178,19 @@ dup3_02 dup3_02
 
 epoll_create01 epoll_create01
 epoll_create02 epoll_create02
+epoll_create03 epoll_create03
+
 epoll_create1_01 epoll_create1_01
 epoll_create1_02 epoll_create1_02
-epoll01 epoll-ltp
+
 epoll_ctl01 epoll_ctl01
 epoll_ctl02 epoll_ctl02
 epoll_ctl03 epoll_ctl03
 epoll_ctl04 epoll_ctl04
 epoll_ctl05 epoll_ctl05
+epoll_ctl06 epoll_ctl06
+epoll_ctl07 epoll_ctl07
+
 epoll_wait01 epoll_wait01
 epoll_wait02 epoll_wait02
 epoll_wait03 epoll_wait03
@@ -192,6 +198,16 @@ epoll_wait04 epoll_wait04
 epoll_wait05 epoll_wait05
 epoll_wait06 epoll_wait06
 epoll_wait07 epoll_wait07
+epoll_wait08 epoll_wait08
+epoll_wait09 epoll_wait09
+epoll_wait10 epoll_wait10
+epoll_wait11 epoll_wait11
+epoll_wait12 epoll_wait12
+epoll_wait13 epoll_wait13
+epoll_wait14 epoll_wait14
+epoll_wait15 epoll_wait15
+epoll_wait16 epoll_wait16
+
 epoll_pwait01 epoll_pwait01
 epoll_pwait02 epoll_pwait02
 epoll_pwait03 epoll_pwait03
@@ -515,7 +531,6 @@ getpgid02 getpgid02
 getpgrp01 getpgrp01
 
 getpid01 getpid01
-getpid02 getpid02
 
 getppid01 getppid01
 getppid02 getppid02
@@ -712,6 +727,27 @@ keyctl06 keyctl06
 keyctl07 keyctl07
 keyctl08 keyctl08
 keyctl09 keyctl09
+keyctl10 keyctl10
+keyctl11 keyctl11
+keyctl12 keyctl12
+keyctl13 keyctl13
+keyctl14 keyctl14
+keyctl15 keyctl15
+keyctl16 keyctl16
+keyctl17 keyctl17
+keyctl18 keyctl18
+keyctl19 keyctl19
+keyctl20 keyctl20
+keyctl21 keyctl21
+keyctl22 keyctl22
+keyctl23 keyctl23
+keyctl24 keyctl24
+keyctl25 keyctl25
+keyctl26 keyctl26
+keyctl27 keyctl27
+keyctl28 keyctl28
+keyctl29 keyctl29
+keyctl30 keyctl30
 
 kcmp01 kcmp01
 kcmp02 kcmp02
@@ -875,6 +911,8 @@ mmap20 mmap20
 mmap21_01 mmap21 -m 1
 mmap21_02 mmap21
 mmap22 mmap22
+mmap23 mmap23
+mmap24 mmap24
 
 modify_ldt01 modify_ldt01
 modify_ldt02 modify_ldt02
@@ -930,6 +968,8 @@ mremap04 mremap04
 mremap05 mremap05
 mremap06 mremap06
 mremap07 mremap07
+mremap08 mremap08
+mremap09 mremap09
 
 mseal01 mseal01
 mseal02 mseal02
@@ -1320,6 +1360,7 @@ sched_setaffinity01 sched_setaffinity01
 sched_getaffinity01 sched_getaffinity01
 
 sched_setattr01 sched_setattr01
+sched_setattr02 sched_setattr02
 sched_getattr01 sched_getattr01
 sched_getattr02 sched_getattr02
 
@@ -1514,6 +1555,7 @@ setsockopt07 setsockopt07
 setsockopt08 setsockopt08
 setsockopt09 setsockopt09
 setsockopt10 setsockopt10
+setsockopt11 setsockopt11
 
 settimeofday01 settimeofday01
 settimeofday02 settimeofday02
@@ -1658,6 +1700,7 @@ swapoff02 swapoff02
 swapon01 swapon01
 swapon02 swapon02
 swapon03 swapon03
+swapon04 swapon04
 
 #Exclusive syscall() for POWER6 machines only
 switch01 endian_switch01
@@ -1678,6 +1721,7 @@ sync_file_range01 sync_file_range01
 sync_file_range02 sync_file_range02
 
 syscall01 syscall01
+syscall02 syscall02
 
 sysconf01 sysconf01
 
@@ -1784,6 +1828,7 @@ userfaultfd03 userfaultfd03
 userfaultfd04 userfaultfd04
 userfaultfd05 userfaultfd05
 userfaultfd06 userfaultfd06
+userfaultfd07 userfaultfd07
 
 ustat01 ustat01
 ustat02 ustat02
@@ -1863,11 +1908,14 @@ perf_event_open02 perf_event_open02
 
 futex_cmp_requeue01 futex_cmp_requeue01
 futex_cmp_requeue02 futex_cmp_requeue02
+futex_cmp_requeue03 futex_cmp_requeue03
 futex_wait01 futex_wait01
 futex_wait02 futex_wait02
 futex_wait03 futex_wait03
 futex_wait04 futex_wait04
 futex_wait05 futex_wait05
+futex_wait06 futex_wait06
+futex_wait07 futex_wait07
 futex_waitv01 futex_waitv01
 futex_waitv02 futex_waitv02
 futex_waitv03 futex_waitv03
@@ -1875,6 +1923,7 @@ futex_wake01 futex_wake01
 futex_wake02 futex_wake02
 futex_wake03 futex_wake03
 futex_wake04 futex_wake04
+futex_wake05 futex_wake05
 futex_wait_bitset01 futex_wait_bitset01
 
 memfd_create01 memfd_create01
@@ -1904,6 +1953,7 @@ membarrier01 membarrier01
 io_uring01 io_uring01
 io_uring02 io_uring02
 io_uring03 io_uring03
+io_uring04 io_uring04
 
 # Tests below may cause kernel memory leak
 perf_event_open03 perf_event_open03

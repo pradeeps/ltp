@@ -93,8 +93,14 @@ static void thp_test(void)
 		exit(0);
 	}
 	tst_reap_children();
+}
 
-	tst_res(TPASS, "system didn't crash.");
+static void run(void)
+{
+	while (tst_remaining_runtime())
+		thp_test();
+
+	tst_res(TPASS, "System didn't crash");
 }
 
 static void setup(void)
@@ -134,11 +140,12 @@ static void cleanup(void)
 static struct tst_test test = {
 	.needs_root = 1,
 	.forks_child = 1,
+	.min_runtime = 120,
 	.setup = setup,
 	.cleanup = cleanup,
-	.test_all = thp_test,
+	.test_all = run,
 	.tags = (const struct tst_tag[]) {
-		{"linux-git", "a7d6e4ecdb76"},
+		{"linux-git", "a7d6e4ecdb7648478ddec76d30d87d03d6e22b31"},
 		{"CVE", "2011-0999"},
 		{}
 	}

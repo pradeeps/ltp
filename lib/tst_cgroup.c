@@ -180,6 +180,7 @@ static const struct cgroup_file memory_ctrl_files[] = {
 	{ "memory.events", NULL, CTRL_MEMORY },
 	{ "memory.low", NULL, CTRL_MEMORY },
 	{ "memory.min", NULL, CTRL_MEMORY },
+	{ "memory.high", "memory.soft_limit_in_bytes", CTRL_MEMORY },
 	{ "memory.max", "memory.limit_in_bytes", CTRL_MEMORY },
 	{ "memory.stat", "memory.stat", CTRL_MEMORY },
 	{ "memory.swappiness", "memory.swappiness", CTRL_MEMORY },
@@ -974,8 +975,14 @@ static void cgroup_drain(const enum tst_cg_ver ver,
 	for (tok = strtok(pid_list, "\n"); tok; tok = strtok(NULL, "\n")) {
 		ret = dprintf(fd, "%s", tok);
 
-		if (ret < (ssize_t)strlen(tok))
+		if (ret < (ssize_t)strlen(tok)) {
+			if (ret < 0 && errno == ESRCH) {
+				tst_res(TINFO, "Pid %s died during drain", tok);
+				continue;
+			}
+
 			tst_brk(TBROK | TERRNO, "Failed to drain %s", tok);
+		}
 	}
 	SAFE_CLOSE(fd);
 }

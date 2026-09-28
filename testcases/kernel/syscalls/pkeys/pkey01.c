@@ -36,7 +36,6 @@
 
 #define TEST_FILE "pkey_testfile"
 #define STR "abcdefghijklmnopqrstuvwxyz12345\n"
-#define PATH_VM_NRHPS "/proc/sys/vm/nr_hugepages"
 
 static int size;
 static int execute_supported = 1;
@@ -142,7 +141,7 @@ static char *flag_to_str(int flags)
 	}
 }
 
-static long __attribute__ ((noinline)) dummy_func(void)
+static long LTP_ATTRIBUTE_NOINLINE dummy_func(void)
 {
 	return 0xdead;
 }

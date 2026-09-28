@@ -266,13 +266,19 @@ TST_RTNL_CHK()
 	local msg1="RTNETLINK answers: Function not implemented"
 	local msg2="RTNETLINK answers: Operation not supported"
 	local msg3="RTNETLINK answers: Protocol not supported"
+	# Since v6.1 the kernel reports an unknown/removed xfrm algorithm via
+	# netlink extack (-ENOSYS + NL_SET_ERR_MSG), which iproute2 prints as
+	# "Error: Requested AUTH algorithm not found."
+	local msg4="Requested .* algorithm not found"
 	local output="$($@ 2>&1 || echo 'LTP_ERR')"
-	local msg
+	local msg match
 
 	echo "$output" | grep -q "LTP_ERR" || return 0
+	output=$(echo "$output" | sed 's/LTP_ERR$//')
 
-	for msg in "$msg1" "$msg2" "$msg3"; do
-		echo "$output" | grep -q "$msg" && tst_brk TCONF "'$@': $msg"
+	for msg in "$msg1" "$msg2" "$msg3" "$msg4"; do
+		match=$(echo "$output" | grep "$msg") && \
+				tst_brk TCONF "'$@': $match"
 	done
 
 	tst_brk TBROK "$@ failed: $output"
@@ -676,7 +682,7 @@ tst_run()
 	local ret
 
 	if [ -n "$TST_TEST_PATH" ]; then
-		for _tst_i in $(grep '^[^#]*\bTST_' "$TST_TEST_PATH" | sed "s/.*TST_//; s/$_tst_pattern//"); do
+		for _tst_i in $(grep '^[^#]*\<TST_' "$TST_TEST_PATH" | sed "s/.*TST_//; s/$_tst_pattern//"); do
 			case "$_tst_i" in
 			ALL_FILESYSTEMS|DISABLE_APPARMOR|DISABLE_SELINUX);;
 			SETUP|CLEANUP|TESTFUNC|ID|CNT|MIN_KVER);;
@@ -698,7 +704,7 @@ tst_run()
 			esac
 		done
 
-		for _tst_i in $(grep '^[^#]*\b_tst_' "$TST_TEST_PATH" | sed "s/.*_tst_//; s/$_tst_pattern//"); do
+		for _tst_i in $(grep '^[^#]*\<_tst_' "$TST_TEST_PATH" | sed "s/.*_tst_//; s/$_tst_pattern//"); do
 			tst_res TWARN "Private variable or function _tst_$_tst_i used!"
 		done
 	fi

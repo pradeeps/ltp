@@ -28,7 +28,7 @@
  * The closest thing to memory.low on V1 is soft_limit_in_bytes which
  * uses a different mechanism and has different semantics. So we only
  * test on V2 like the selftest. We do test on more file systems, but
- * not tempfs becaue it can't evict the page cache without swap. Also
+ * not tmpfs because it can't evict the page cache without swap. Also
  * we avoid filesystems which allocate extra memory for buffer heads.
  *
  * The tolerances have been increased from the self tests.
@@ -36,18 +36,16 @@
 
 #define _GNU_SOURCE
 
-#include <inttypes.h>
-
 #include "memcontrol_common.h"
-
-#define TMPDIR "mntdir"
 
 static struct tst_cg_group *trunk_cg[3];
 static struct tst_cg_group *leaf_cg[4];
 static int fd = -1;
+static unsigned int num_children_spawned;
 
 enum checkpoints {
-	CHILD_IDLE
+	CHILD_IDLE,
+	TEST_DONE,
 };
 
 enum trunk_cg {
@@ -66,6 +64,12 @@ enum leaf_cg {
 static void cleanup_sub_groups(void)
 {
 	size_t i;
+
+	if (num_children_spawned > 0) {
+		TST_CHECKPOINT_WAKE2(TEST_DONE, num_children_spawned);
+		tst_reap_children();
+		num_children_spawned = 0;
+	}
 
 	for (i = ARRAY_SIZE(leaf_cg); i > 0; i--) {
 		if (!leaf_cg[i - 1])
@@ -88,13 +92,13 @@ static void alloc_anon_in_child(const struct tst_cg_group *const cg,
 	const pid_t pid = SAFE_FORK();
 
 	if (pid) {
-		tst_reap_children();
+		SAFE_WAITPID(pid, NULL, 0);
 		return;
 	}
 
 	SAFE_CG_PRINTF(cg, "cgroup.procs", "%d", getpid());
 
-	tst_res(TINFO, "Child %d in %s: Allocating anon: %"PRIdPTR,
+	tst_res(TINFO, "Child %d in %s: Allocating anon: %zu",
 		getpid(), tst_cg_group_name(cg), size);
 	alloc_anon(size);
 
@@ -107,15 +111,21 @@ static void alloc_pagecache_in_child(const struct tst_cg_group *const cg,
 	const pid_t pid = SAFE_FORK();
 
 	if (pid) {
-		tst_reap_children();
+		num_children_spawned++;
+		TST_CHECKPOINT_WAIT(CHILD_IDLE);
 		return;
 	}
 
 	SAFE_CG_PRINTF(cg, "cgroup.procs", "%d", getpid());
 
-	tst_res(TINFO, "Child %d in %s: Allocating pagecache: %"PRIdPTR,
+	tst_res(TINFO, "Child %d in %s: Allocating pagecache: %zu",
 		getpid(), tst_cg_group_name(cg), size);
 	alloc_pagecache(fd, size);
+
+	SAFE_FSYNC(fd);
+
+	TST_CHECKPOINT_WAKE(CHILD_IDLE);
+	TST_CHECKPOINT_WAIT(TEST_DONE);
 
 	exit(0);
 }
@@ -125,6 +135,7 @@ static void test_memcg_low(void)
 	long c[4];
 	unsigned int i;
 
+	num_children_spawned = 0;
 	fd = SAFE_OPEN(TMPDIR"/tmpfile", O_RDWR | O_CREAT, 0600);
 	trunk_cg[A] = tst_cg_group_mk(tst_cg, "trunk_A");
 
@@ -212,7 +223,7 @@ static void test_memcg_low(void)
 			TST_EXP_EXPR(low == 0,
 				"(%c low events=%ld) == 0", id, low);
 		} else if (!tst_cg_memory_recursiveprot(leaf_cg[F])) {
-			/* dont not check F when recursive_protection enabled */
+			/* do not check F when recursive_protection enabled */
 			TST_EXP_EXPR(low == 0,
 				"(%c low events=%ld) == 0", id, low);
 		}

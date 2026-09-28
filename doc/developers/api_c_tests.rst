@@ -7,14 +7,9 @@
 LTP C API
 =========
 
-Core LTP API
-------------
-.. kernel-doc:: ../../include/tst_res_flags.h
-.. kernel-doc:: ../../include/tst_test.h
-
-Test macros
------------
-.. kernel-doc:: ../../include/tst_test_macros.h
+Assertion
+---------
+.. kernel-doc:: ../../include/tst_assert.h
 
 Capabilities
 ------------
@@ -22,49 +17,105 @@ Capabilities
 
 Checkpoints
 -----------
-
 .. kernel-doc:: ../../include/tst_checkpoint.h
+
+Clone
+-----
+.. kernel-doc:: ../../include/tst_clone.h
 
 Commands
 --------
 .. kernel-doc:: ../../include/tst_cmd.h
+
+Core LTP API
+------------
+.. kernel-doc:: ../../include/tst_common.h
+.. kernel-doc:: ../../include/tst_res_flags.h
+.. kernel-doc:: ../../include/tst_test.h
+
+CPU
+---
+.. kernel-doc:: ../../include/tst_cpu.h
 
 Crypto
 ------
 .. kernel-doc:: ../../include/tst_crypto.h
 .. kernel-doc:: ../../include/tst_af_alg.h
 
+Devices
+-------
+.. kernel-doc:: ../../include/tst_device.h
+
+Filesystems
+-----------
+.. kernel-doc:: ../../include/tst_fs.h
+
+Fuzzy sync
+----------
+.. kernel-doc:: ../../include/tst_fuzzy_sync.h
+
 Guarded buffers
 ---------------
 .. kernel-doc:: ../../include/tst_buffers.h
+
+Hugepages
+---------
+.. kernel-doc:: ../../include/tst_hugepage.h
 
 Kernel
 ------
 .. kernel-doc:: ../../include/tst_kernel.h
 .. kernel-doc:: ../../include/tst_kvercmp.h
 
-Process state
--------------
+Kernel configuration
+--------------------
+.. kernel-doc:: ../../include/tst_kconfig.h
 
-.. kernel-doc:: ../../include/tst_process_state.h
+Kernel taint
+------------
+.. kernel-doc:: ../../include/tst_taint.h
+
+Memory
+------
+.. kernel-doc:: ../../include/tst_memutils.h
 
 NUMA
 ----
-.. kernel-doc:: ../../include/tst_numa.h
+.. kernel-doc:: ../../include/tse_numa.h
 
 Option parsing
 --------------
-
 .. kernel-doc:: ../../include/tst_parse.h
+
+Process state
+-------------
+.. kernel-doc:: ../../include/tst_process_state.h
+
+Safe file operations
+--------------------
+.. kernel-doc:: ../../include/tst_safe_file_ops.h
 
 Saving and restoring /proc|sys values
 -------------------------------------
 .. kernel-doc:: ../../include/tst_sys_conf.h
 
+Swap
+----
+.. kernel-doc:: ../../include/tse_swap.h
+
+Sysfs
+-----
+
+.. kernel-doc:: ../../include/tst_sysfs_assert.h
+
 Temporary directory
 -------------------
 .. kernel-doc:: ../../include/tst_tmpdir.h
 
-LTP libraries
--------------
-.. kernel-doc:: ../../include/tse_swap.h
+Test macros
+-----------
+.. kernel-doc:: ../../include/tst_test_macros.h
+
+Uinput
+------
+.. kernel-doc:: ../../include/tse_uinput.h

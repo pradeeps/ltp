@@ -47,6 +47,22 @@
  *
  *  mm/shmem: support FS_IOC_[SG]ETFLAGS in tmpfs
  *
+ * vfat and exfat are skipped because they do not support standard writable
+ * attributes (append, immutable, nodump) even though newer kernels support
+ * casefolding which causes FS_IOC_GETFLAGS to succeed since the following commits:
+ *
+ *  commit 27e0b573dd4aa927670fbfd84732e569fde72078
+ *  Author: Chuck Lever <cel@kernel.org>
+ *  Date:   Thu May 7 04:52:57 2026 -0400
+ *
+ *  exfat: Implement fileattr_get for case sensitivity
+ *
+ *  commit c92db2ca726fe61a66580d30ecff8c192a791935
+ *  Author: Chuck Lever <cel@kernel.org>
+ *  Date:   Thu May 7 04:52:56 2026 -0400
+ *
+ *  fat: Implement fileattr_get for case sensitivity
+ *
  */
 
 #define _GNU_SOURCE
@@ -133,14 +149,18 @@ static struct tst_test test = {
 	.skip_filesystems = (const char *const[]) {
 		"fuse",
 		"ntfs",
+		"vfat",
+		"exfat",
 		NULL
 	},
 	.tags = (const struct tst_tag[]) {
-		{"linux-git", "93bc420ed41d"},
-		{"linux-git", "99652ea56a41"},
-		{"linux-git", "04a87e347282"},
-		{"linux-git", "5f955f26f3d4"},
-		{"linux-git", "e408e695f5f1"},
+		{"linux-git", "93bc420ed41df63a18ae794101f7cbf45226a6ef"},
+		{"linux-git", "99652ea56a4186bc5bf8a3721c5353f41b35ebcb"},
+		{"linux-git", "04a87e3472828f769a93655d7c64a27573bdbc2c"},
+		{"linux-git", "5f955f26f3d42d04aba65590a32eb70eedb7f37d"},
+		{"linux-git", "e408e695f5f1f60d784913afc45ff2c387a5aeb8"},
+		{"linux-git", "27e0b573dd4aa927670fbfd84732e569fde72078"},
+		{"linux-git", "c92db2ca726fe61a66580d30ecff8c192a791935"},
 		{}
 	},
 };

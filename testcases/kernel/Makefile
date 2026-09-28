@@ -19,6 +19,7 @@ SUBDIRS			+= lib
 SUBDIRS			+= connectors \
 			   containers \
 			   controllers \
+			   coredump \
 			   crypto \
 			   device-drivers \
 			   firmware \
@@ -36,6 +37,8 @@ SUBDIRS			+= connectors \
 			   sched \
 			   security \
 			   sound \
+			   sysfs \
+			   thermal \
 			   tracing \
 			   uevents \
 			   watchqueue \
