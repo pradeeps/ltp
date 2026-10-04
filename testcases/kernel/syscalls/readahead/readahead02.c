@@ -35,7 +35,6 @@
 #include "lapi/syscalls.h"
 
 static char testfile[PATH_MAX] = "testfile";
-#define DROP_CACHES_FNAME "/proc/sys/vm/drop_caches"
 #define PROC_IO_FNAME "/proc/self/io"
 #define DEFAULT_FILESIZE (64 * 1024 * 1024)
 #define SHORT_SLEEP_US 5000
@@ -48,7 +47,6 @@ static unsigned long cached_max;
 static int ovl_mounted;
 static int readahead_length  = 4096;
 static char sys_bdi_ra_path[PATH_MAX];
-static int orig_bdi_limit;
 
 static const char mntpoint[] = OVL_BASE_MNTPOINT;
 
@@ -97,7 +95,7 @@ static int has_file(const char *fname, int required)
 
 static void drop_caches(void)
 {
-	SAFE_FILE_PRINTF(DROP_CACHES_FNAME, "1");
+	SAFE_FILE_PRINTF(PATH_VM_DROP_CACHES, "1");
 }
 
 static unsigned long get_bytes_read(void)
@@ -389,6 +387,11 @@ static void setup_readahead_length(void)
 	struct stat sbuf;
 	char tmp[PATH_MAX], *backing_dev;
 	int ra_new_limit, ra_limit;
+	struct tst_path_val bdi_ra = {
+		.path = sys_bdi_ra_path,
+		.val = NULL,
+		.flags = TST_SR_TBROK
+	};
 
 	/* Find out backing device name */
 	SAFE_LSTAT(tst_device->dev, &sbuf);
@@ -400,10 +403,16 @@ static void setup_readahead_length(void)
 	backing_dev = basename(tmp);
 	sprintf(sys_bdi_ra_path, "/sys/class/block/%s/bdi/read_ahead_kb",
 		backing_dev);
-	if (access(sys_bdi_ra_path, F_OK))
-		return;
 
-	SAFE_FILE_SCANF(sys_bdi_ra_path, "%d", &orig_bdi_limit);
+	if (access(sys_bdi_ra_path, F_OK)) {
+		/* Partitions use the parent disk's BDI sysfs entry */
+		snprintf(sys_bdi_ra_path, sizeof(sys_bdi_ra_path),
+			"/sys/class/block/%s/../bdi/read_ahead_kb", backing_dev);
+		if (access(sys_bdi_ra_path, F_OK))
+			return;
+	}
+
+	tst_sys_conf_save(&bdi_ra);
 
 	/* raise bdi limit as much as kernel allows */
 	ra_new_limit = testfile_size / 1024;
@@ -430,7 +439,7 @@ static void setup(void)
 	if (access(PROC_IO_FNAME, F_OK))
 		tst_brk(TCONF, "Requires " PROC_IO_FNAME);
 
-	has_file(DROP_CACHES_FNAME, 1);
+	has_file(PATH_VM_DROP_CACHES, 1);
 
 	/* check if readahead is supported */
 	tst_syscall(__NR_readahead, 0, 0, 0);
@@ -447,9 +456,6 @@ static void cleanup(void)
 {
 	if (ovl_mounted)
 		SAFE_UMOUNT(OVL_MNT);
-
-	if (orig_bdi_limit)
-		SAFE_FILE_PRINTF(sys_bdi_ra_path, "%d", orig_bdi_limit);
 }
 
 static struct tst_test test = {
@@ -466,8 +472,8 @@ static struct tst_test test = {
 	.tcnt = ARRAY_SIZE(tcases),
 	.timeout = 60,
 	.tags = (const struct tst_tag[]) {
-		{"linux-git", "b833a3660394"},
-		{"linux-git", "5b910bd615ba"},
+		{"linux-git", "b833a3660394876541d2513ce2736debc7c6797a"},
+		{"linux-git", "5b910bd615ba947383e63cd1ed106ffa3060159e"},
 		{}
 	}
 };

@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "hugetlb.h"
+#include "tse_hugetlb.h"
 
 #define C1		0x1234ABCD
 #define C2		~0x1234ABCD
@@ -75,7 +75,7 @@ static void cleanup(void)
 
 static struct tst_test test = {
 	.tags = (struct tst_tag[]) {
-		{"linux-git", "86df86424939"},
+		{"linux-git", "86df86424939d316b1f6cfac1b6204f0c7dee317"},
 		{}
 	},
 	.needs_root = 1,

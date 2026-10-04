@@ -21,6 +21,7 @@
 #include "tst_res_flags.h"
 #include "tst_parse.h"
 #include "tst_test_macros.h"
+#include "tst_path_defs.h"
 #include "tst_checkpoint.h"
 #include "tst_device.h"
 #include "tst_mkfs.h"
@@ -159,7 +160,7 @@ pid_t safe_fork(const char *filename, unsigned int lineno);
  * tst_strerrno() - Converts an errno number into a name.
  *
  * @err: An errno number.
- * return: An errno name e.g. "EINVAL".
+ * Return: An errno name e.g. "EINVAL".
  */
 const char *tst_strerrno(int err);
 
@@ -167,7 +168,7 @@ const char *tst_strerrno(int err);
  * tst_strsig() - Converts a signal number into a name.
  *
  * @sig: A signal number.
- * return: A signal name e.g. "SIGINT".
+ * Return: A signal name e.g. "SIGINT".
  */
 const char *tst_strsig(int sig);
 
@@ -180,7 +181,7 @@ const char *tst_strsig(int sig);
  *   Not thread safe.
  *
  * @status: A status as returned by wait()
- * return: A string description for the status e.g. "killed by SIGKILL".
+ * Return: A string description for the status e.g. "killed by SIGKILL".
  */
 const char *tst_strstatus(int status);
 
@@ -279,6 +280,9 @@ struct tst_ulimit_val {
  *
  * @min_kver: A minimum kernel version supporting the filesystem which has been
  *            created with mkfs.
+ *
+ * @mount_check_support: Skip this filesystem if :manpage:`mount(2)` fails with
+ *                       EOPNOTSUPP.
  */
 struct tst_fs {
 	const char *type;
@@ -291,6 +295,8 @@ struct tst_fs {
 	const void *mnt_data;
 
 	const char *min_kver;
+
+	unsigned int mount_check_support:1;
 };
 
 /**
@@ -298,7 +304,7 @@ struct tst_fs {
  *
  * @tcnt: A number of tests. If set the test() callback is called tcnt times
  *        and each time passed an increasing counter value.
- * @options: An NULL optstr terminated array of :ref:`struct tst_option`.
+ * @options: An NULL optstr terminated array of struct tst_option.
  *
  * @min_kver: A minimal kernel version the test can run on. e.g. "3.10".
  *
@@ -322,7 +328,7 @@ struct tst_fs {
  * @forks_child: Has to be set if the test intends to fork children.
  *
  * @needs_device: If set a block device is prepared for the test, the device
- *                path and size are set in the :ref:`struct tst_device` variable
+ *                path and size are set in the struct tst_device variable
  *                called tst_device. If $LTP_DEV variable exists in the test
  *                environment the test attempts to use that device first and
  *                only if that fails the test falls back to use loop devices.
@@ -361,7 +367,7 @@ struct tst_fs {
  *                   i.e. file system that is supported by the kernel and has
  *                   mkfs installed on the system.The file system is mounted at
  *                   tst_test.mntpoint and file system details, e.g. type are set
- *                   in the :ref:`struct tst_device`. Each execution is independent,
+ *                   in the struct tst_device. Each execution is independent,
  *                   that means that for each iteration tst_test.setup() is
  *                   called at the test start and tst_test.cleanup() is called
  *                   at the end and tst_brk() only exits test for a single
@@ -389,6 +395,9 @@ struct tst_fs {
  *                    is enabled.
  *
  * @min_cpus: Minimal number of online CPUs the test needs to run.
+ *
+ * @needs_cpu_vendor: The test needs a specific CPU vendor e.g. "GenuineIntel"
+ *                    or "AuthenticAMD".
  *
  * @min_mem_avail: Minimal amount of available RAM memory in megabytes required
  *                 for the test to run.
@@ -427,8 +436,8 @@ struct tst_fs {
  *
  * @filesystems: A NULL type terminated array of per file system type
  *               parameters for mkfs and mount. If the first entry type is NULL
- *               it describes a default parameters for all file system tests.
- *               The rest of the entries the describes per file system type
+ *               it describes default parameters for all file system tests.
+ *               The remaining entries describe per file system type
  *               parameters. If tst_test.all_filesystems is set, the test runs
  *               for all filesystems and uses the array to lookup the mkfs
  *               and mount options. If tst_test.all_filesystems is not set
@@ -470,6 +479,9 @@ struct tst_fs {
  *           probabilistic or fuzzy synchronization tests).
  *           If not set, a default minimum of 1 second is enforced.
  *
+ * @iterations: The default value for the number of test iterations, i.e. the
+ *              -i command line parameter.
+ *
  * @setup: Setup callback is called once at the start of the test in order to
  *         prepare the test environment.
  *
@@ -500,7 +512,7 @@ struct tst_fs {
  *
  * @save_restore: A {} terminated array of /proc or /sys files that should
  *                saved at the start of the test and restored at the end. See
- *                tst_sys_conf_save() and :ref:`struct tst_path_val` for details.
+ *                tst_sys_conf_save() and struct tst_path_val for details.
  *
  * @ulimit: A {} terminated array of process limits RLIMIT_* to be adjusted for
  *          the test.
@@ -522,14 +534,14 @@ struct tst_fs {
  * @bufs: A description of guarded buffers to be allocated for the test. Guarded
  *        buffers are buffers with poisoned page allocated right before the start
  *        of the buffer and canary right after the end of the buffer. See
- *        :ref:`struct tst_buffers` and tst_buffers_alloc() for details.
+ *        struct tst_buffers and tst_buffers_alloc() for details.
  *
  * @caps: A {} terminated array of capabilities to change before the start of
- *        the test. See :ref:`struct tst_cap` and tst_cap_setup() for details.
+ *        the test. See struct tst_cap and tst_cap_setup() for details.
  *
- * @tags: A {} terminated array of test tags. See :ref:`struct tst_tag` for details.
+ * @tags: A {} terminated array of test tags. See struct tst_tag for details.
  *
- * @needs_cmds: A NULL terminated array of :ref:`struct tst_cmd` required for the test to run.
+ * @needs_cmds: A NULL terminated array of struct tst_cmd required for the test to run.
  *
  * @needs_cgroup_ver: If set the test will run only if the specified cgroup
  *                    version is present on the system.
@@ -537,7 +549,7 @@ struct tst_fs {
  * @needs_cgroup_ctrls: A {} terminated array of cgroup controllers the test
  *                      needs to run.
  *
- * @needs_cgroup_nsdelegate: If set test the will run only if cgroup2 is mounted
+ * @needs_cgroup_nsdelegate: If set the test will run only if cgroup2 is mounted
  *                           with nsdelegate option.
  */
 
@@ -580,6 +592,8 @@ struct tst_fs {
 	const char *const *skip_filesystems;
 
 	unsigned long min_cpus;
+	const char *needs_cpu_vendor;
+
 	unsigned long min_mem_avail;
 	unsigned long min_swap_avail;
 
@@ -598,6 +612,7 @@ struct tst_fs {
 	int timeout;
 	int runtime;
 	int min_runtime;
+	unsigned int iterations;
 
 	void (*setup)(void);
 	void (*cleanup)(void);
@@ -652,7 +667,7 @@ void tst_run_tcases(int argc, char *argv[], struct tst_test *self)
 /**
  * tst_reinit() - Reinitialize the test library.
  *
- * In a cases where a test child process calls exec() it no longer can access
+ * In cases where a test child process calls exec() it no longer can access
  * the test library shared memory and therefore use the test reporting
  * functions, checkpoint library, etc. This function re-initializes the test
  * library so that it can be used again.
@@ -690,7 +705,7 @@ void tst_reinit(void);
  * of the script yourself. If you do not need to check the return value
  * yourself you can use tst_reap_children() to wait for the completion. Or let
  * the test library collect the child automatically, just be wary that the
- * script and the test both runs concurently at the same time in this case.
+ * script and the test both run concurrently at the same time in this case.
  *
  * Return: A pid of the (shell) script process.
  */
@@ -783,7 +798,7 @@ int tst_creat_unlinked(const char *path, int flags, mode_t mode);
 /**
  * tst_get_tmpdir_root() - Returns path to the test temporary directory root.
  *
- * The path is either hardcoded as /tmp or could be overrided by a TMPDIR
+ * The path is either hardcoded as /tmp or could be overridden by a TMPDIR
  * environment variable.
  *
  * Return: A path to the test temporary directory root.
@@ -829,7 +844,7 @@ int main(int argc, char *argv[])
  *
  * @message: Error message (the reason to skip test).
  *
- * This macro is used in test that couldn't be compiled either because current
+ * This macro is used in tests that couldn't be compiled either because current
  * CPU architecture is unsupported or because of missing development libraries.
  */
 #define TST_TEST_TCONF(message)                                 \

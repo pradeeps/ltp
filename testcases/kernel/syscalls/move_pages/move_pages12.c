@@ -76,8 +76,6 @@
 
 #define LOOPS	10000
 #define PATH_MEMINFO	"/proc/meminfo"
-#define PATH_NR_HUGEPAGES	"/proc/sys/vm/nr_hugepages"
-#define PATH_HUGEPAGES	"/sys/kernel/mm/hugepages/"
 #define TEST_NODES	2
 
 static struct tcase {
@@ -259,7 +257,7 @@ static void setup(void)
 
 	check_config(TEST_NODES);
 
-	if (access(PATH_HUGEPAGES, F_OK))
+	if (access(PATH_MM_HUGEPAGES, F_OK))
 		tst_brk(TCONF, "Huge page not supported");
 
 	ret = get_allowed_nodes(NH_MEMS, TEST_NODES, &node1, &node2);
@@ -269,7 +267,7 @@ static void setup(void)
 	pgsz = (int)get_page_size();
 	SAFE_FILE_LINES_SCANF(PATH_MEMINFO, "Hugepagesize: %d", &hpsz);
 
-	SAFE_FILE_PRINTF("/proc/sys/vm/drop_caches", "3");
+	SAFE_FILE_PRINTF(PATH_VM_DROP_CACHES, "3");
 	SAFE_FILE_LINES_SCANF(PATH_MEMINFO, "MemFree: %ld", &memfree);
 	tst_res(TINFO, "Free RAM %ld kB", memfree);
 
@@ -307,10 +305,10 @@ static void setup(void)
 	hpsz *= 1024;
 
 	if (orig_hugepages_node1 == -1 || orig_hugepages_node2 == -1) {
-		SAFE_FILE_SCANF(PATH_NR_HUGEPAGES, "%ld", &orig_hugepages);
+		SAFE_FILE_SCANF(PATH_VM_NR_HPAGES, "%ld", &orig_hugepages);
 		tst_res(TINFO, "Increasing global hugepages pool to %ld",
 			orig_hugepages + 8);
-		SAFE_FILE_PRINTF(PATH_NR_HUGEPAGES, "%ld", orig_hugepages + 8);
+		SAFE_FILE_PRINTF(PATH_VM_NR_HPAGES, "%ld", orig_hugepages + 8);
 	}
 
 	alloc_free_huge_on_node(node1, 4L * hpsz);
@@ -320,7 +318,7 @@ static void setup(void)
 static void cleanup(void)
 {
 	if (orig_hugepages != -1)
-		SAFE_FILE_PRINTF(PATH_NR_HUGEPAGES, "%ld", orig_hugepages);
+		SAFE_FILE_PRINTF(PATH_VM_NR_HPAGES, "%ld", orig_hugepages);
 
 	if (orig_hugepages_node1 != -1) {
 		SAFE_FILE_PRINTF(path_hugepages_node1,
@@ -342,10 +340,10 @@ static struct tst_test test = {
 	.tcnt = ARRAY_SIZE(tcases),
 	.runtime = 240,
 	.tags = (const struct tst_tag[]) {
-		{"linux-git", "e66f17ff7177"},
-		{"linux-git", "c9d398fa2378"},
-		{"linux-git", "4643d67e8cb0"},
-		{"linux-git", "3f4b815a439a"},
+		{"linux-git", "e66f17ff71772b209eed39de35aaa99ba819c93d"},
+		{"linux-git", "c9d398fa237882ea07167e23bcfc5e6847066518"},
+		{"linux-git", "4643d67e8cb0b3536ef0ab5cddd1cedc73fa14ad"},
+		{"linux-git", "3f4b815a439adfb8f238335612c4b28bc10084d8"},
 		{}
 	}
 };

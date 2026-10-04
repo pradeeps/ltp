@@ -38,7 +38,6 @@
 
 #define TEST_FILE	"testfile"
 #define SELF_USERNS	"/proc/self/ns/user"
-#define MAX_USERNS	"/proc/sys/user/max_user_namespaces"
 #define UID_MAP	"/proc/self/uid_map"
 
 static acl_t acl;
@@ -152,9 +151,9 @@ static void setup(void)
 	 */
 	if (access(SELF_USERNS, F_OK) != 0) {
 		user_ns_supported = 0;
-	} else if (!access(MAX_USERNS, F_OK)) {
-		SAFE_FILE_SCANF(MAX_USERNS, "%d", &orig_max_userns);
-		SAFE_FILE_PRINTF(MAX_USERNS, "%d", 10);
+	} else if (!access(PATH_USER_MAX_USER_NAMESPACES, F_OK)) {
+		SAFE_FILE_SCANF(PATH_USER_MAX_USER_NAMESPACES, "%d", &orig_max_userns);
+		SAFE_FILE_PRINTF(PATH_USER_MAX_USER_NAMESPACES, "%d", 10);
 	}
 
 }
@@ -162,7 +161,7 @@ static void setup(void)
 static void cleanup(void)
 {
 	if (orig_max_userns != -1)
-		SAFE_FILE_PRINTF(MAX_USERNS, "%d", orig_max_userns);
+		SAFE_FILE_PRINTF(PATH_USER_MAX_USER_NAMESPACES, "%d", orig_max_userns);
 
 	if (acl)
 		acl_free(acl);
@@ -177,7 +176,7 @@ static struct tst_test test = {
 	.tcnt = ARRAY_SIZE(tcases),
 	.test = do_getxattr,
 	.tags = (const struct tst_tag[]) {
-		{"linux-git", "82c9a927bc5d"},
+		{"linux-git", "82c9a927bc5df6e06b72d206d24a9d10cced4eb5"},
 		{}
 },
 };

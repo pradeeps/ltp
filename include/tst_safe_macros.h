@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <grp.h>
+#include <poll.h>
 
 #include "safe_stdio_fn.h"
 #include "safe_macros_fn.h"
@@ -244,12 +245,13 @@ int safe_getgroups(const char *file, const int lineno, int size, gid_t list[]);
 #define SAFE_MOUNT(source, target, filesystemtype, \
 		   mountflags, data) \
 	safe_mount(__FILE__, __LINE__, NULL, (source), (target), \
-		   (filesystemtype), (mountflags), (data), NULL)
+		   (filesystemtype), (mountflags), (data), NULL, 0)
 
 #define SAFE_MOUNT2(source, target, filesystemtype, \
-		    mountflags, data, is_fuse) \
+		    mountflags, data, is_fuse, check_support) \
 	safe_mount(__FILE__, __LINE__, NULL, (source), (target), \
-		   (filesystemtype), (mountflags), (data), (is_fuse))
+		   (filesystemtype), (mountflags), (data), (is_fuse), \
+		   (check_support))
 
 #define SAFE_UMOUNT(target) \
 	safe_umount(__FILE__, __LINE__, NULL, (target))
@@ -516,5 +518,10 @@ int safe_statvfs(const char *file, const int lineno,
                               const char *path, struct statvfs *buf);
 #define SAFE_STATVFS(path, buf) \
 	safe_statvfs(__FILE__, __LINE__, (path), (buf))
+
+int safe_poll(const char *const file, const int lineno, struct pollfd *fds,
+		nfds_t nfds, int timeout);
+#define SAFE_POLL(fds, nfds, timeout) \
+	safe_poll(__FILE__, __LINE__, (fds), (nfds), (timeout))
 
 #endif /* TST_SAFE_MACROS_H__ */

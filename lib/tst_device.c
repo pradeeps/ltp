@@ -82,7 +82,7 @@ static int set_dev_path(char *dev, char *path, size_t path_len)
 
 int tst_find_free_loopdev(char *path, size_t path_len)
 {
-	int ctl_fd, dev_fd, rc, i;
+	int ctl_fd, dev_fd, rc, i, path_set;
 	struct loop_info loopinfo;
 	char buf[PATH_MAX];
 
@@ -93,8 +93,13 @@ int tst_find_free_loopdev(char *path, size_t path_len)
 		rc = ioctl(ctl_fd, LOOP_CTL_GET_FREE);
 		close(ctl_fd);
 		if (rc >= 0) {
-			if (path && set_dev_loop_path(rc, path, path_len))
-				tst_brkm(TBROK, NULL, "Could not stat loop device %i", rc);
+			if (path) {
+				path_set = TST_RETRY_FN_EXP_BACKOFF(
+					set_dev_loop_path(rc, path, path_len),
+					TST_RETVAL_EQ0, 1);
+				if (path_set)
+					tst_brkm(TBROK, NULL, "Could not stat loop device %i", rc);
+			}
 			tst_resm(TINFO, "Found free device %d '%s'",
 				rc, path ?: "");
 			return rc;
@@ -156,7 +161,12 @@ int tst_attach_device(const char *dev, const char *file)
 	int dev_fd, file_fd;
 	struct loop_info loopinfo;
 
-	dev_fd = open(dev, O_RDWR);
+	if (strlen(file) >= LO_NAME_SIZE) {
+		tst_brkm(TBROK, NULL, "Device name can't be longer than %u chars",
+			 LO_NAME_SIZE);
+	}
+
+	dev_fd = TST_RETRY_FN_EXP_BACKOFF(open(dev, O_RDWR), TST_RETVAL_GE0, 1);
 	if (dev_fd < 0) {
 		tst_resm(TWARN | TERRNO, "open('%s', O_RDWR) failed", dev);
 		return 1;
@@ -182,7 +192,7 @@ int tst_attach_device(const char *dev, const char *file)
 	 * LOOP_SET_FD and LOOP_SET_STATUS.
 	 */
 	memset(&loopinfo, 0, sizeof(loopinfo));
-	strcpy(loopinfo.lo_name, file);
+	strncpy(loopinfo.lo_name, file, sizeof(loopinfo.lo_name) - 1);
 
 	if (ioctl(dev_fd, LOOP_SET_STATUS, &loopinfo)) {
 		close(dev_fd);

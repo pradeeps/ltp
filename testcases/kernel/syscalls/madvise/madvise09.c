@@ -17,11 +17,11 @@
  * o Write to some of the madvised pages again, these must not be freed
  *
  * o Set memory limits
- *   - memory.max = 8MB
- *   - memory.swap.max = 16MB
+ *   - memory.max = 16 * PAGES * page_size (8MB on 4KB page size)
+ *   - memory.swap.max = 2 * memory.max (16MB on 4KB page size)
  *
  *   The reason for doubling the memory.max is to have safe margin
- *   for forking the memory hungy child etc. And the reason to setting
+ *   for forking the memory hungry child etc. And the reason to setting
  *   memory.swap.max to twice of that is to give the system chance
  *   to try to free some memory before cgroup OOM kicks in and kills
  *   the memory hungry child.
@@ -54,8 +54,8 @@ static int swap_accounting_enabled;
 #define TOUCHED_PAGE1 0
 #define TOUCHED_PAGE2 10
 
-#define MEM_LIMIT (8 * 1024 * 1024)
-#define SWAP_LIMIT (2 * MEM_LIMIT)
+static long long mem_limit, orig_mem_limit;
+static long long swap_limit, orig_swap_limit;
 
 static void memory_pressure_child(void)
 {
@@ -146,6 +146,27 @@ static void child(void)
 
 	SAFE_CG_PRINTF(tst_cg, "cgroup.procs", "%d", getpid());
 
+	/*
+	 * Reset cgroup memory limits in case this is a retry run.
+	 * For cgroup v2, restore the default "max". For cgroup v1, restore the
+	 * saved numeric limits, raising memsw before memory to keep the v1
+	 * memory <= memsw invariant.
+	 *
+	 * Otherwise, the retried child inherits the strict MEM_LIMIT from the previous
+	 * run, causing MADV_FREE pages to be dropped immediately before we touch them.
+	 */
+	if (TST_CG_VER_IS_V1(tst_cg, "memory")) {
+		if (swap_accounting_enabled)
+			SAFE_CG_PRINTF(tst_cg, "memory.swap.max", "%lld", orig_swap_limit);
+
+		SAFE_CG_PRINTF(tst_cg, "memory.max", "%lld", orig_mem_limit);
+	} else {
+		SAFE_CG_PRINT(tst_cg, "memory.max", "max");
+
+		if (swap_accounting_enabled)
+			SAFE_CG_PRINT(tst_cg, "memory.swap.max", "max");
+	}
+
 	ptr = SAFE_MMAP(NULL, PAGES * page_size, PROT_READ | PROT_WRITE,
 			MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
@@ -167,12 +188,12 @@ static void child(void)
 	ptr[TOUCHED_PAGE1 * page_size] = 'b';
 	ptr[TOUCHED_PAGE2 * page_size] = 'b';
 
-	SAFE_CG_PRINTF(tst_cg, "memory.max", "%d", MEM_LIMIT);
-	tst_res(TINFO, "Setting memory.max to %d bytes", MEM_LIMIT);
+	SAFE_CG_PRINTF(tst_cg, "memory.max", "%lld", mem_limit);
+	tst_res(TINFO, "Setting memory.max to %lld bytes", mem_limit);
 
 	if (swap_accounting_enabled) {
-		SAFE_CG_PRINTF(tst_cg, "memory.swap.max", "%d", SWAP_LIMIT);
-		tst_res(TINFO, "Setting memory.swap.max to %d bytes", SWAP_LIMIT);
+		SAFE_CG_PRINTF(tst_cg, "memory.swap.max", "%lld", swap_limit);
+		tst_res(TINFO, "Setting memory.swap.max to %lld bytes", swap_limit);
 	} else {
 		tst_res(TINFO, "memory.swap.max is unavailable, running without SWAP_LIMIT");
 	}
@@ -269,18 +290,27 @@ retry:
 
 static void setup(void)
 {
-	long swap_total;
+	if (TST_CG_VER_IS_V1(tst_cg, "memory"))
+		SAFE_CG_SCANF(tst_cg, "memory.max", "%lld", &orig_mem_limit);
 
-	if (SAFE_CG_HAS(tst_cg, "memory.swap.max"))
+	if (SAFE_CG_HAS(tst_cg, "memory.swap.max")) {
 		swap_accounting_enabled = 1;
-	else
-		tst_res(TINFO, "Swap accounting is disabled");
 
-	SAFE_FILE_LINES_SCANF("/proc/meminfo", "SwapTotal: %ld", &swap_total);
-	if (swap_total <= 0)
-		tst_brk(TCONF, "MADV_FREE does not work without swap");
+		if (TST_CG_VER_IS_V1(tst_cg, "memory"))
+			SAFE_CG_SCANF(tst_cg, "memory.swap.max", "%lld", &orig_swap_limit);
+	} else {
+		tst_res(TINFO, "Swap accounting is disabled");
+	}
 
 	page_size = getpagesize();
+
+	mem_limit = 16 * PAGES * page_size;
+	swap_limit = 2 * mem_limit;
+
+	if (tst_available_swap() < swap_limit / 1024) {
+		tst_brk(TCONF, "System needs at least %lldMB free swap to run this test",
+			swap_limit / TST_MB);
+	}
 }
 
 static struct tst_test test = {

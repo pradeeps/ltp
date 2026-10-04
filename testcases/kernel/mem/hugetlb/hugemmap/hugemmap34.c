@@ -20,7 +20,7 @@
 
 #define _GNU_SOURCE
 #include "lapi/mmap.h"
-#include "hugetlb.h"
+#include "tse_hugetlb.h"
 #include "tst_safe_stdio.h"
 #include <errno.h>
 #include <inttypes.h>
@@ -32,7 +32,6 @@
 #define STACK_ALLOCATION_SIZE	(16*1024*1024)
 #endif
 #define MNTPOINT "hugetlbfs/"
-#define PATH_HUGEPAGE "/sys/kernel/mm/hugepages"
 
 #define STACKS_MAX 64
 
@@ -196,7 +195,7 @@ void cleanup(void)
 
 static struct tst_test test = {
 	.tags = (struct tst_tag[]) {
-		{"linux-git", "0d59a01bc461"},
+		{"linux-git", "0d59a01bc461bbab4017ff449b8401151ef44cf6"},
 		{}
 	},
 	.needs_root = 1,

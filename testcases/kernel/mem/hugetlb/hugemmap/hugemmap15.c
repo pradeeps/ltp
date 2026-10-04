@@ -22,7 +22,7 @@
 #endif
 
 #define _GNU_SOURCE
-#include "hugetlb.h"
+#include "tse_hugetlb.h"
 
 #if defined(__powerpc__) || defined(__powerpc64__) || defined(__ia64__) || \
 	defined(__s390__) || defined(__s390x__) || defined(__sparc__) || \
@@ -237,7 +237,7 @@ static void cleanup(void)
 
 static struct tst_test test = {
 	.tags = (struct tst_tag[]) {
-		{"linux-git", "cbf52afdc0eb"},
+		{"linux-git", "cbf52afdc0eb88492cf7808cc4b4f58a46f1b1ad"},
 		{}
 	},
 	.needs_root = 1,

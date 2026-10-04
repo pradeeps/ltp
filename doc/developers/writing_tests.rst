@@ -52,7 +52,7 @@ Do not over-comment
 
 Comments can sometimes save your day, but they can easily do more harm than
 good. There has been several cases where comments and actual implementation
-drifted slowly apart which yielded into API misuses and hard to find bugs.
+drifted slowly apart which led to API misuses and hard to find bugs.
 Remember there is only one thing worse than no documentation: wrong
 documentation.
 
@@ -138,7 +138,7 @@ The following linting code can be found when we run ``make check``:
 
     * - LTP-005
       - Array must terminate with a sentinel value (i.e. ``NULL`` or ``{}``)
-      - When defining arrays in the :ref:`struct tst_test` structure, we need to
+      - When defining arrays in the :c:struct:`tst_test` structure, we need to
         end the array items with a sentinel ``NULL`` value.
 
 Shell coding style
@@ -167,6 +167,8 @@ from Debian that is used to check for non-portable shell code.
 
       If ``make check`` does not report any problems the code still may be wrong,
       as ``checkbashisms.pl`` is used for checking only common mistakes.
+
+      For tips how to avoid bashisms see https://mywiki.wooledge.org/Bashism.
 
 Here there are some common sense style rules for shell
 
@@ -285,7 +287,7 @@ Datafiles
 If your test needs data files, these should be put into a subdirectory
 named ``datafiles`` and installed into the ``testcases/data/$TCID`` directory.
 This will require to add ``INSTALL_DIR := testcases/data/TCID`` into
-correspondent ``datafiles/Makefile``.
+corresponding ``datafiles/Makefile``.
 
 You can obtain path to datafiles via ``$TST_DATAROOT`` provided by ``test.sh``
 or via C function ``tst_dataroot()`` provided by libltp:
@@ -358,10 +360,15 @@ check :master:`.github/workflows/ci-docker-build.yml`.
 LTP C And Shell Test API Comparison
 -----------------------------------
 
+This table compares :c:struct:`tst_test` members in the C API with
+corresponding ``$TST_*`` variables in the legacy :shell_lib:`tst_test.sh`
+shell API. For tests using the new shell loader library, see
+:doc:`api_shell_tests`.
+
 .. list-table::
     :header-rows: 1
 
-    * - C API :ref:`struct tst_test` members
+    * - C API :c:struct:`tst_test` members
       - Shell API ``$TST_*`` variables
 
     * - .all_filesystems
@@ -379,25 +386,22 @@ LTP C And Shell Test API Comparison
     * - .cleanup
       - TST_CLEANUP
 
-    * - .dev_extra_opts
-      - TST_DEV_EXTRA_OPTS
-
-    * - .dev_fs_opts
-      - TST_DEV_FS_OPTS
-
-    * - .dev_fs_type
-      - TST_FS_TYPE
-
     * - .dev_min_size
       - TST_DEVICE_SIZE
+
+    * - .filesystems
+      - \-
+
+    * - .forks_child
+      - not applicable
 
     * - .format_device
       - TST_FORMAT_DEVICE
 
-    * - .max_runtime
-      - TST_TIMEOUT (not exactly the same, a real timeout based on old .timeout
-        concept. .max_runtime has also an extra 30 sec safety margin for
-        teardown of the test.)
+    * - .runtime
+      - TST_TIMEOUT (not exactly the same, TST_TIMEOUT is a real timeout.
+        .runtime controls the test execution loop duration and has an extra
+        30 sec safety margin for setup and cleanup.)
 
     * - .min_cpus
       - not applicable
@@ -408,11 +412,14 @@ LTP C And Shell Test API Comparison
     * - .min_mem_avail
       - not applicable
 
-    * - .mnt_flags
-      - TST_MNT_PARAMS
+    * - .min_runtime
+      - \-
 
     * - .min_swap_avail
       - not applicable
+
+    * - .mnt_flags
+      - TST_MNT_PARAMS
 
     * - .mntpoint | .mnt_data
       - TST_MNTPOINT
@@ -420,7 +427,16 @@ LTP C And Shell Test API Comparison
     * - .mount_device
       - TST_MOUNT_DEVICE
 
+    * - .needs_abi_bits
+      - not applicable
+
     * - .needs_cgroup_ctrls
+      - \-
+
+    * - .needs_cgroup_nsdelegate
+      - \-
+
+    * - .needs_cgroup_ver
       - \-
 
     * - .needs_checkpoints
@@ -429,11 +445,17 @@ LTP C And Shell Test API Comparison
     * - .needs_cmds
       - TST_NEEDS_CMDS
 
+    * - .needs_cpu_vendor
+      - \-
+
     * - .needs_devfs
       - \-
 
     * - .needs_device
       - TST_NEEDS_DEVICE
+
+    * - .needs_hugetlbfs
+      - \-
 
     * - removed
       - TST_NEEDS_DRIVERS
@@ -460,6 +482,9 @@ LTP C And Shell Test API Comparison
       - \-
 
     * - .restore_wallclock
+      - not applicable
+
+    * - .runs_script
       - not applicable
 
     * - .sample
@@ -507,7 +532,7 @@ LTP C And Shell Test API Comparison
     * - .test_variants
       - \-
 
-    * - .tst_hugepage
+    * - .hugepages
       - not applicable
 
     * - .ulimit
@@ -525,11 +550,20 @@ LTP C And Shell Test API Comparison
     * - not applicable
       - TST_USAGE
 
+    * - not applicable
+      - TST_DEV_EXTRA_OPTS
+
+    * - not applicable
+      - TST_DEV_FS_OPTS
+
+    * - not applicable
+      - TST_FS_TYPE
+
 .. list-table::
     :header-rows: 1
 
     * - C API other structs
       - Shell API ``$TST_*`` variables
 
-    * - :ref:`struct tst_device`
+    * - ``struct tst_device``
       - TST_DEVICE

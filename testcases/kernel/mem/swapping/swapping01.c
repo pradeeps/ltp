@@ -174,13 +174,13 @@ static struct tst_test test = {
 	.min_mem_avail = 10,
 	.runtime = 600,
 	.test_all = test_swapping,
-	.skip_in_compat = 1,
+	.needs_abi_bits = 64,
 	.needs_kconfigs = (const char *[]) {
 		"CONFIG_SWAP=y",
 		NULL
 	},
 	.tags = (const struct tst_tag[]) {
-		{"linux-git", "50a15981a1fa"},
+		{"linux-git", "50a15981a1fac7e019ff7c3cba87531fb580f065"},
 		{}
 	}
 };

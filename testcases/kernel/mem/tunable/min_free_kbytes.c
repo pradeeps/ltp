@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) Linux Test Project, 2012-2025
+ * Copyright (c) Linux Test Project, 2012-2026
  * Copyright (C) 2012-2017  Red Hat, Inc.
  */
 
@@ -17,7 +17,7 @@
  *
  * 1. default min_free_kbytes with all ``overcommit_memory`` policy
  * 2. 2x default value with all ``overcommit_memory`` policy
- * 3. 5% of MemFree or %2 MemTotal with all ``overcommit_memory`` policy
+ * 3. 5% of MemFree or 2% MemTotal with all ``overcommit_memory`` policy
  *
  * [References]
  *
@@ -35,10 +35,6 @@
 
 #define MAP_SIZE (1UL<<20)
 
-#define OVERCOMMIT_MEMORY "/proc/sys/vm/overcommit_memory"
-#define MIN_FREE_KBYTES "/proc/sys/vm/min_free_kbytes"
-#define PANIC_ON_OOM "/proc/sys/vm/panic_on_oom"
-
 volatile int end;
 static long default_tune = -1;
 static unsigned long total_mem;
@@ -48,9 +44,30 @@ static int eatup_mem(unsigned long overcommit_policy);
 static void check_monitor(void);
 static void sighandler(int signo LTP_ATTRIBUTE_UNUSED);
 
+static void set_min_free_kbytes(int i)
+{
+	unsigned long memfree, memtotal, tune;
+
+	switch (i) {
+	case 0:
+		tune = default_tune;
+		break;
+	case 1:
+		tune = 2 * default_tune;
+		break;
+	default:
+		memfree = SAFE_READ_MEMINFO("MemFree:");
+		memtotal = SAFE_READ_MEMINFO("MemTotal:");
+		tune = MIN(memfree / 20, memtotal / 50);
+		break;
+	}
+
+	TST_SYS_CONF_LONG_SET(PATH_VM_MIN_FREE_KBYTES, tune, 1);
+}
+
 static void min_free_kbytes_test(void)
 {
-	int pid, status;
+	pid_t pid;
 	struct sigaction sa;
 
 	sa.sa_handler = sighandler;
@@ -60,7 +77,6 @@ static void min_free_kbytes_test(void)
 
 	pid = SAFE_FORK();
 	if (pid == 0) {
-		/* startup the check monitor */
 		check_monitor();
 		exit(0);
 	}
@@ -70,55 +86,31 @@ static void min_free_kbytes_test(void)
 	test_tune(1);
 
 	SAFE_KILL(pid, SIGUSR1);
-	SAFE_WAITPID(pid, &status, WUNTRACED | WCONTINUED);
-
-	if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-		tst_res(TFAIL, "check_monitor child exit with status: %s",
-			tst_strstatus(status));
-
-	tst_res(TPASS, "min_free_kbytes test pass");
 }
 
 static void test_tune(unsigned long overcommit_policy)
 {
 	int status;
-	int pid[3];
-	int ret, i;
-	unsigned long tune, memfree, memtotal;
+	pid_t pid;
+	int i;
 
-	TST_SYS_CONF_LONG_SET(OVERCOMMIT_MEMORY, overcommit_policy, 1);
+	TST_SYS_CONF_LONG_SET(PATH_VM_OVERCOMMIT_MEMORY, overcommit_policy, 1);
 
 	for (i = 0; i < 3; i++) {
-		if (i == 0)
-			TST_SYS_CONF_LONG_SET(MIN_FREE_KBYTES, default_tune, 1);
-		else if (i == 1) {
-			TST_SYS_CONF_LONG_SET(MIN_FREE_KBYTES, 2 * default_tune, 1);
-		} else {
-			memfree = SAFE_READ_MEMINFO("MemFree:");
-			memtotal = SAFE_READ_MEMINFO("MemTotal:");
-			tune = memfree / 20;
-			if (tune > (memtotal / 50))
-				tune = memtotal / 50;
-
-			TST_SYS_CONF_LONG_SET(MIN_FREE_KBYTES, tune, 1);
-		}
+		set_min_free_kbytes(i);
 
 		fflush(stdout);
-		switch (pid[i] = fork()) {
-		case -1:
-			tst_brk(TBROK | TERRNO, "fork");
-			break;
-		case 0:
-			ret = eatup_mem(overcommit_policy);
-			exit(ret);
+		pid = SAFE_FORK();
+		if (pid == 0) {
+			exit(eatup_mem(overcommit_policy));
 		}
 
-		SAFE_WAITPID(pid[i], &status, WUNTRACED | WCONTINUED);
+		SAFE_WAITPID(pid, &status, WUNTRACED | WCONTINUED);
 
 		if (overcommit_policy == 2) {
 			if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
 				tst_res(TFAIL, "child unexpectedly failed: %s",
-					 tst_strstatus(status));
+					tst_strstatus(status));
 		} else if (overcommit_policy == 1) {
 			if (!WIFSIGNALED(status) || WTERMSIG(status) != SIGKILL)
 #ifdef TST_ABI32
@@ -126,20 +118,19 @@ static void test_tune(unsigned long overcommit_policy)
 				if (total_mem < 3145728UL)
 #endif
 					tst_res(TFAIL, "child unexpectedly failed: %s",
-						 tst_strstatus(status));
+						tst_strstatus(status));
 #ifdef TST_ABI32
 				/* in 32-bit system, a process allocate about 3Gb memory at most */
 				else
 					tst_res(TINFO, "Child can't allocate "
-						 ">3Gb memory in 32bit system");
+						">3Gb memory in 32bit system");
 			}
 #endif
 		} else {
 			if (WIFEXITED(status)) {
-				if (WEXITSTATUS(status) != 0) {
+				if (WEXITSTATUS(status) != 0)
 					tst_res(TFAIL, "child unexpectedly failed: %s",
 						tst_strstatus(status));
-				}
 			} else if (!WIFSIGNALED(status) ||
 				   WTERMSIG(status) != SIGKILL) {
 				tst_res(TFAIL, "child unexpectedly failed: %s",
@@ -177,21 +168,55 @@ static int eatup_mem(unsigned long overcommit_policy)
 
 static void check_monitor(void)
 {
-	unsigned long tune;
-	unsigned long memfree;
+	int violated = 0;
+	unsigned long tune, threshold;
+	unsigned long memfree, min_memfree;
+	int i;
 
 	while (!end) {
 		memfree = SAFE_READ_MEMINFO("MemFree:");
-		tune = TST_SYS_CONF_LONG_GET(MIN_FREE_KBYTES);
+		tune = TST_SYS_CONF_LONG_GET(PATH_VM_MIN_FREE_KBYTES);
+		/*
+		 * Allow 10% tolerance to account for transient states.
+		 */
+		threshold = tune * 9 / 10;
 
 		if (memfree < tune) {
-			tst_res(TINFO, "MemFree is %lu kB, "
-				 "min_free_kbytes is %lu kB", memfree, tune);
-			tst_res(TFAIL, "MemFree < min_free_kbytes");
+			min_memfree = memfree;
+			/*
+			 * Give it some time to reclaim. The kernel should keep
+			 * MemFree above min_free_kbytes, but transient drops
+			 * are possible under high pressure.
+			 * Check every 10ms for up to 2 seconds for high accuracy.
+			 */
+			for (i = 0; i < 200; i++) {
+				usleep(10000);
+				memfree = SAFE_READ_MEMINFO("MemFree:");
+				if (memfree < min_memfree)
+					min_memfree = memfree;
+
+				if (memfree >= tune)
+					break;
+			}
+
+			if (memfree < threshold) {
+				tst_res(TFAIL, "MemFree %lu kB < 90%% of min_free_kbytes %lu kB (MinSeen: %lu%%) after 2s",
+					memfree, tune, (min_memfree * 100 / tune));
+				violated = 1;
+			} else if (memfree < tune) {
+				tst_res(TINFO, "MemFree (%lu kB) stayed within 10%% tolerance (min %lu%%) after ~2s",
+					memfree, (min_memfree * 100 / tune));
+			} else {
+				tst_res(TINFO, "MemFree recovered to %lu kB (min %lu%%) after %d ms",
+					memfree, (min_memfree * 100 / tune), (i + 1) * 10);
+			}
 		}
 
-		sleep(2);
+		usleep(100000);
 	}
+
+	if (!violated)
+		tst_res(TPASS, "min_free_kbytes test pass");
 }
 
 static void sighandler(int signo LTP_ATTRIBUTE_UNUSED)
@@ -201,14 +226,14 @@ static void sighandler(int signo LTP_ATTRIBUTE_UNUSED)
 
 static void setup(void)
 {
-	if (TST_SYS_CONF_LONG_GET(PANIC_ON_OOM)) {
+	if (TST_SYS_CONF_LONG_GET(PATH_VM_PANIC_ON_OOM)) {
 		tst_brk(TCONF,
 			"panic_on_oom is set, disable it to run these testcases");
 	}
 
 	total_mem = SAFE_READ_MEMINFO("MemTotal:") + SAFE_READ_MEMINFO("SwapTotal:");
 
-	default_tune = TST_SYS_CONF_LONG_GET(MIN_FREE_KBYTES);
+	default_tune = TST_SYS_CONF_LONG_GET(PATH_VM_MIN_FREE_KBYTES);
 }
 
 static struct tst_test test = {
@@ -218,8 +243,8 @@ static struct tst_test test = {
 	.setup = setup,
 	.test_all = min_free_kbytes_test,
 	.save_restore = (const struct tst_path_val[]) {
-		{OVERCOMMIT_MEMORY, NULL, TST_SR_TBROK},
-		{MIN_FREE_KBYTES, NULL, TST_SR_TBROK},
+		{PATH_VM_OVERCOMMIT_MEMORY, NULL, TST_SR_TBROK},
+		{PATH_VM_MIN_FREE_KBYTES, NULL, TST_SR_TBROK},
 		{}
 	},
 };

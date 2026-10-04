@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 
-#include "hugetlb.h"
+#include "tse_hugetlb.h"
 
 #define MNTPOINT "hugetlbfs/"
 static long hpage_size;
@@ -138,7 +138,7 @@ static void cleanup(void)
 
 static struct tst_test test = {
 	.tags = (struct tst_tag[]) {
-		{"linux-git", "af73e4d9506d"},
+		{"linux-git", "af73e4d9506d3b797509f3c030e7dcd554f7d9c4"},
 		{}
 	},
 	.needs_root = 1,
